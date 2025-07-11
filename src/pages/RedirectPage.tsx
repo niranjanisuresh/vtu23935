@@ -4,29 +4,24 @@ import { logEvent } from "../middleware/logMiddleware";
 import "../styles/redirect.css";
 
 const RedirectPage: React.FC = () => {
-  const { shortcode } = useParams();
+  const { shortcode } = useParams<{ shortcode: string }>();
   const navigate = useNavigate();
 
   useEffect(() => {
-    logEvent("redirect_attempt", `Trying to redirect for shortcode: ${shortcode}`);
+    const fetchOriginalUrl = () => {
+      const mockDatabase: Record<string, string> = {
+        abcd1: "https://example.com",
+        xyz99: "https://openai.com"
+      };
 
-    
-    const fetchOriginalUrl = async () => {
-      try {
-        const originalUrl = shortcode === "abcd1"
-          ? "https://example.com"
-          : "";
+      const url = shortcode ? mockDatabase[shortcode] : undefined;
 
-        if (originalUrl) {
-          logEvent("redirect_success", `Redirecting to: ${originalUrl}`);
-          window.location.replace(originalUrl);
-        } else {
-          logEvent("redirect_error", `Shortcode not found: ${shortcode}`);
-          navigate("/error", { state: { message: "Short URL not found." } });
-        }
-      } catch (error) {
-        logEvent("redirect_error", `Error fetching URL for: ${shortcode}`);
-        navigate("/error", { state: { message: "An error occurred during redirection." } });
+      if (url) {
+        logEvent("info", true, "page.RedirectPage");
+        window.location.replace(url);
+      } else {
+        logEvent("error", false, "page.RedirectPage");
+        navigate("/error", { state: { message: "Shortcode not found." } });
       }
     };
 
@@ -34,9 +29,7 @@ const RedirectPage: React.FC = () => {
   }, [shortcode, navigate]);
 
   return (
-    <div className="redirect-message">
-      Redirecting to your original URL...
-    </div>
+    <div className="redirect-message">Redirecting...</div>
   );
 };
 

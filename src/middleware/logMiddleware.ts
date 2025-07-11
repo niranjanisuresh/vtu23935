@@ -1,38 +1,31 @@
-export type LogType = "submit" | "redirect" | "error" | "info";
+type LogLevel = "info" | "error" | "debug" | "warn";
 
-interface LogPayload {
+interface LogEntry {
+  stack: "frontend";
+  level: LogLevel;
+  package: string;
+  message: boolean;
   timestamp: string;
-  type: LogType;
-  message: string;
-  source?: string;
 }
 
-const LOG_API_URL = "http://20.244.56.144/evaluation-service/logs"; 
-
-export const logEvent = async (type: LogType, message: string, source?: string) => {
-  const token = localStorage.getItem("authToken");
-
-  const payload: LogPayload = {
-    timestamp: new Date().toISOString(),
-    type,
+export const logEvent = (
+  level: LogLevel,
+  message: boolean,
+  pkg: string
+): void => {
+  const entry: LogEntry = {
+    stack: "frontend",
+    level,
+    package: pkg,
     message,
-    source,
+    timestamp: new Date().toISOString()
   };
 
   try {
-    const response = await fetch(LOG_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, 
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      console.warn(`Logging failed: ${response.status} ${response.statusText}`);
-    }
+    const existingLogs: LogEntry[] = JSON.parse(localStorage.getItem("logger.json") || "[]");
+    existingLogs.push(entry);
+    localStorage.setItem("logger.json", JSON.stringify(existingLogs));
   } catch (error) {
-    console.warn("Logging error:", error);
+    console.warn("Logger.json write failed:", error);
   }
 };
